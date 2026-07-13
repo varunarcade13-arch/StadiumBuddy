@@ -272,6 +272,52 @@ describe("API Routes", () => {
       expect(text).toContain("done");
     });
 
+    it("falls back to mock model when live model streams fail", async () => {
+      process.env["GEMINI_API_KEY"] = "invalid-key-to-trigger-live-call-failure";
+      resetGeminiModel();
+
+      const req = new NextRequest("http://localhost/api/chat", {
+        method: "POST",
+        body: JSON.stringify(validChatPayload),
+      });
+
+      const res = await chatPOST(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("text/event-stream");
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let text = "";
+
+      while (!done) {
+        const result = await reader?.read();
+        done = result?.done ?? true;
+        if (result?.value) {
+          text += decoder.decode(result.value);
+        }
+      }
+
+      const lines = text.split("\n\n");
+      let reconstructed = "";
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const parsed = JSON.parse(line.substring(6));
+            if (parsed.type === "delta") {
+              reconstructed += parsed.content;
+            }
+          } catch {}
+        }
+      }
+
+      expect(text).toContain("data:");
+      expect(reconstructed).toContain("Seating Directions for Section 115");
+      expect(text).toContain("done");
+
+      resetGeminiModel();
+    });
+
     it("returns 400 for invalid JSON body", async () => {
       const req = new NextRequest("http://localhost/api/chat", {
         method: "POST",

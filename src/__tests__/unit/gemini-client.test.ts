@@ -21,12 +21,17 @@ describe("Gemini Client", () => {
       // Ensure no api key is set
       delete process.env["GEMINI_API_KEY"];
 
+      const originalNodeEnv = process.env.NODE_ENV;
+      (process.env as any).NODE_ENV = "development";
+
       const model = getGeminiModel();
       expect(model).toBeDefined();
       expect(model.startChat).toBeDefined();
 
       const chat = model.startChat();
       expect(chat.sendMessageStream).toBeDefined();
+
+      (process.env as any).NODE_ENV = originalNodeEnv;
     });
 
     it("mocks streaming response for default case", async () => {

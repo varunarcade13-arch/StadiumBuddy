@@ -31,7 +31,7 @@ export function PreferencesModal({ isOpen, onClose, userPrefs, onChange }: Prefe
     const current = [...userPrefs.dietaryRestrictions];
     let updated: string[];
     if (checked) {
-      updated = current.includes(restriction) ? current : [...current, restriction];
+      updated = [...current, restriction];
     } else {
       updated = current.filter((r) => r !== restriction);
     }

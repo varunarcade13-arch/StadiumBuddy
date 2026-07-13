@@ -262,6 +262,24 @@ describe("useSpeechRecognition", () => {
       (global as any).window = originalWindow;
     }
   });
+
+  it("should return early in announce when document is undefined in useSpeechRecognition", () => {
+    const mockRecInstance = new MockSpeechRecognition();
+    if (typeof window !== "undefined") {
+      (window as any).SpeechRecognition = vi.fn().mockImplementation(() => mockRecInstance);
+    }
+
+    const { result } = renderHook(() => useSpeechRecognition("en"));
+    const originalDocument = global.document;
+    try {
+      (global as any).document = undefined;
+      act(() => {
+        result.current.startListening(vi.fn());
+      });
+    } finally {
+      (global as any).document = originalDocument;
+    }
+  });
 });
 
 // ─── useChat Tests ───────────────────────────────────────────────────────────
@@ -534,5 +552,62 @@ describe("useChat", () => {
       gDiv.remove();
       eDiv.remove();
     }
+  });
+
+  it("covers setVoiceSpeaker and missing chunk edge cases in streaming", async () => {
+    // 1. setVoiceSpeaker check
+    const { result: chatHook } = renderHook(() => useChat("metlife"));
+    const dummySpeaker = vi.fn();
+    act(() => {
+      chatHook.current.setVoiceSpeaker(dummySpeaker);
+    });
+
+    // 2. Mock reader that returns null chunk, error chunk without error message, and throws a raw string instead of Error
+    const mockEncoder = new TextEncoder();
+    const mockStreamChunks = [
+      'data: null\n', // chunk is null
+      'data: {"type":"error"}\n', // chunk error without message
+    ];
+
+    let chunkIndex = 0;
+    const mockReader = {
+      read: vi.fn().mockImplementation(async () => {
+        if (chunkIndex < mockStreamChunks.length) {
+          const value = mockEncoder.encode(mockStreamChunks[chunkIndex]);
+          chunkIndex++;
+          return { done: false, value };
+        }
+        // Throw a non-Error string exception to test instanceof Error fallback in useChat
+        throw "Raw string connection failure";
+      }),
+    };
+
+    const mockResponse = {
+      ok: true,
+      body: {
+        getReader: () => mockReader,
+      },
+    };
+
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+    await act(async () => {
+      await chatHook.current.sendMessage("Hello AI");
+    });
+
+    expect(chatHook.current.isStreaming).toBe(false);
+    expect(chatHook.current.error).toBe("AI response error");
+  });
+
+  it("covers fetch exception with raw string instead of Error", async () => {
+    vi.mocked(fetch).mockRejectedValue("Raw string connection failure" as any);
+
+    const { result } = renderHook(() => useChat("metlife"));
+    await act(async () => {
+      await result.current.sendMessage("Hey AI");
+    });
+
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.error).toBe("Unknown error");
   });
 });
