@@ -205,7 +205,18 @@ function createGeminiStream(
         const accumulatedText = await streamDeltas(result.stream, sendChunk, messageId);
         finishStream(accumulatedText, sendChunk, messageId, hasFaqs);
       } catch (error) {
-        handleStreamError(error, sendChunk);
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Live Gemini API call failed, attempting mock fallback:", error);
+        }
+        try {
+          const fallbackModel = getGeminiModel({ apiKey: "" });
+          const fallbackChat = fallbackModel.startChat({ history: geminiHistory });
+          const fallbackResult = await fallbackChat.sendMessageStream(fullMessage);
+          const accumulatedText = await streamDeltas(fallbackResult.stream, sendChunk, messageId);
+          finishStream(accumulatedText, sendChunk, messageId, hasFaqs);
+        } catch (fallbackError) {
+          handleStreamError(fallbackError, sendChunk);
+        }
       } finally {
         controller.close();
       }

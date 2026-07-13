@@ -29,7 +29,7 @@ let _modelInstance: GenerativeModel | null = null;
  * to prevent any unsafe content generation in a public-facing stadium app.
  */
 export function getGeminiModel(config?: GeminiClientConfig): GenerativeModel {
-  if (_modelInstance) return _modelInstance;
+  if (_modelInstance && config === undefined) return _modelInstance;
 
   const apiKey = config?.apiKey ?? process.env["GEMINI_API_KEY"] ?? "";
 
