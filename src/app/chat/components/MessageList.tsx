@@ -8,7 +8,7 @@ interface MessageListProps {
   partialContent: string;
 }
 
-export function MessageList({ messages, isStreaming, partialContent }: MessageListProps) {
+export const MessageList = memo(function MessageList({ messages, isStreaming, partialContent }: MessageListProps) {
   return (
     <div
       role="log"
@@ -66,7 +66,7 @@ export function MessageList({ messages, isStreaming, partialContent }: MessageLi
       )}
     </div>
   );
-}
+});
 
 const MessageBubble = memo(function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";

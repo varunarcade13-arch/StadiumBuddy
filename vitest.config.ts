@@ -18,7 +18,12 @@ export default defineConfig({
         functions: 80,
         statements: 80,
       },
-      include: ["src/lib/**", "src/app/api/**"],
+      include: [
+        "src/lib/**",
+        "src/app/api/**",
+        "src/app/components/**",
+        "src/app/chat/components/**"
+      ],
       exclude: ["src/test/**", "**/*.d.ts", "node_modules"],
     },
     include: ["**/__tests__/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
