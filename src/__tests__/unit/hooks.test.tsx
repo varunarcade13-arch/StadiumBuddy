@@ -610,4 +610,109 @@ describe("useChat", () => {
     expect(result.current.isStreaming).toBe(false);
     expect(result.current.error).toBe("Unknown error");
   });
+
+  it("covers fetch response with null body", async () => {
+    const mockResponse = {
+      ok: true,
+      body: null,
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+    const { result } = renderHook(() => useChat("metlife"));
+    await act(async () => {
+      await result.current.sendMessage("Hey AI");
+    });
+
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.error).toBe("No response body");
+  });
+
+  it("covers stream with empty data line and long ellipsis announcement", async () => {
+    const mockEncoder = new TextEncoder();
+    const mockStreamChunks = [
+      'data: \n', // empty jsonStr
+      'data: {"type":"delta","content":"This is a very long response text designed to exceed one hundred characters in length to cover the ellipsis toggle branch in our announcer function. Let us write a few more words here to be absolutely certain it passes."}\n',
+      'data: {"type":"done"}\n',
+    ];
+
+    let chunkIndex = 0;
+    const mockReader = {
+      read: vi.fn().mockImplementation(async () => {
+        if (chunkIndex < mockStreamChunks.length) {
+          const value = mockEncoder.encode(mockStreamChunks[chunkIndex]);
+          chunkIndex++;
+          return { done: false, value };
+        }
+        return { done: true, value: undefined };
+      }),
+    };
+
+    const mockResponse = {
+      ok: true,
+      body: {
+        getReader: () => mockReader,
+      },
+    };
+
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+    const { result } = renderHook(() => useChat("metlife"));
+    await act(async () => {
+      await result.current.sendMessage("Hey AI");
+    });
+
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("covers fallback UUID if crypto is defined but randomUUID is not a function", () => {
+    const originalCrypto = Object.getOwnPropertyDescriptor(global, "crypto");
+    try {
+      Object.defineProperty(global, "crypto", {
+        value: { randomUUID: undefined },
+        configurable: true,
+        writable: true,
+      });
+      const { result } = renderHook(() => useChat("metlife"));
+      expect(result.current.sessionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    } finally {
+      if (originalCrypto) {
+        Object.defineProperty(global, "crypto", originalCrypto);
+      }
+    }
+  });
+
+  it("should ignore sendMessage call when isStreaming is true", async () => {
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
+
+    const { result } = renderHook(() => useChat("metlife"));
+    act(() => {
+      void result.current.sendMessage("Message 1");
+    });
+
+    expect(result.current.isStreaming).toBe(true);
+
+    vi.clearAllMocks();
+    await act(async () => {
+      await result.current.sendMessage("Message 2");
+    });
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("covers fetch failure response without error properties falling back to Request failed", async () => {
+    const mockResponse = {
+      ok: false,
+      json: async () => ({}),
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+    const { result } = renderHook(() => useChat("metlife"));
+    await act(async () => {
+      await result.current.sendMessage("Hey AI");
+    });
+
+    expect(result.current.isStreaming).toBe(false);
+    expect(result.current.error).toBe("Request failed");
+  });
 });

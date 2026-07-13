@@ -20,10 +20,9 @@ interface SpeechRecognition extends EventTarget {
   abort(): void;
 }
 
-function announce(message: string, urgent = false): void {
+function announce(message: string): void {
   if (typeof document === "undefined") return;
-  const id = urgent ? "emergency-announcer" : "global-announcer";
-  const el = document.getElementById(id);
+  const el = document.getElementById("global-announcer");
   if (el) {
     el.textContent = "";
     setTimeout(() => { el.textContent = message; }, 10);

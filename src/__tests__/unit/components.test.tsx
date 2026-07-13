@@ -349,6 +349,31 @@ describe("Chat Screen UI Components", () => {
         seatingZone: null,
       });
     });
+
+    it("renders fallback JSX values when preferences are null/empty", () => {
+      const emptyPrefs = {
+        mobilityAssistanceNeeded: false,
+        preferredTransport: null,
+        dietaryRestrictions: [],
+        language: "en" as const,
+        seatingZone: null,
+      };
+
+      render(
+        <PreferencesModal
+          isOpen={true}
+          onClose={vi.fn()}
+          userPrefs={emptyPrefs}
+          onChange={vi.fn()}
+        />
+      );
+
+      const seatingInput = screen.getByRole("textbox", { name: "Your Seating Zone" });
+      expect(seatingInput).toHaveValue("");
+
+      const transportSelect = screen.getByRole("combobox", { name: "Preferred Departure Transport" });
+      expect(transportSelect).toHaveValue("");
+    });
   });
 
   describe("MessageList component", () => {
