@@ -67,7 +67,8 @@ graph TD
 - **UI Logic**: React 19, Vanilla CSS Custom Variables, responsive layouts, WCAG 2.2 AA accessibility contrast rules
 - **AI Backend**: [@google/generative-ai](https://www.npmjs.com/package/@google/generative-ai) (Gemini 2.0 Flash)
 - **Type Safety & Validation**: [TypeScript](https://www.typescriptlang.org/) & [Zod](https://zod.dev/)
-- **Test Harness**: [Vitest](https://vitest.dev/) with `v8` coverage provider (guaranteeing **100% statement, branch, function, and line coverage**)
+- **Test Harness**: [Vitest](https://vitest.dev/) with `v8` coverage provider (guaranteeing **100% statement, line, and function coverage**; and **>97% branch coverage**)
+- **WCAG 2.2 AA Compliance**: Conforming to WCAG 2.2 AA accessibility specifications (including full landmark tags, skip links, screen reader announcements, visible keyboard focus highlights, and a minimum **44x44px touch target** on all elements).
 
 ---
 
@@ -90,7 +91,7 @@ graph TD
    ```bash
    npm run dev
    ```
-4. Access the application at [http://localhost:3003](http://localhost:3003).
+4. Access the application at [http://localhost:3000](http://localhost:3000).
 
 ### 🧪 Run Tests & Coverage
 Run the unit test suite and check coverage thresholds:
@@ -106,6 +107,8 @@ gcloud run deploy stadium-buddy \
   --region us-central1 \
   --allow-unauthenticated
 ```
+
+👉 **Live Demo URL**: [https://stadium-buddy-828661838349.us-central1.run.app](https://stadium-buddy-828661838349.us-central1.run.app)
 
 ---
 
