@@ -15,8 +15,8 @@ vi.mock("@/lib/gemini/guardrails", async (importOriginal) => {
       valid: false,
       sanitizedOutput: "Content was sanitized for safety reasons.",
     }),
-    // Keep validateInput working normally so the request passes
-    validateInput: actual.validateInput,
+    // Keep runInputGuardrails working normally so the request passes
+    runInputGuardrails: actual.runInputGuardrails,
   };
 });
 

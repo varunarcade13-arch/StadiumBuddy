@@ -43,15 +43,15 @@ const validPayload = {
 describe("POST /api/chat – non-Error catch and development debugInfo (L151-157)", () => {
   beforeEach(() => {
     clearRateLimitStore();
-    process.env = { ...originalEnv };
+    (process as any).env = { ...originalEnv };
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    (process as any).env = originalEnv;
   });
 
   it("uses 'Unknown AI error' when a non-Error value is thrown", async () => {
-    process.env["NODE_ENV"] = "test"; // not development → no debugInfo
+    (process.env as any)["NODE_ENV"] = "test"; // not development → no debugInfo
     const req = new NextRequest("http://localhost/api/chat", {
       method: "POST",
       body: JSON.stringify(validPayload),
@@ -78,7 +78,7 @@ describe("POST /api/chat – non-Error catch and development debugInfo (L151-157
   });
 
   it("includes debugInfo when NODE_ENV is development", async () => {
-    process.env["NODE_ENV"] = "development"; // triggers debugInfo branch
+    (process.env as any)["NODE_ENV"] = "development"; // triggers debugInfo branch
     const req = new NextRequest("http://localhost/api/chat", {
       method: "POST",
       body: JSON.stringify(validPayload),

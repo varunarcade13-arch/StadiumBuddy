@@ -27,14 +27,14 @@ function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
 const ICONS = {
   messageSquare: ["M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"],
   alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z", "M12 9v4M12 17h.01"],
-  train:         ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
-  map:           ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"],
-  arrowLeft:     ["M19 12H5M12 19l-7-7 7-7"],
-  dashboard:     ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
-  check:         ["M20 6L9 17l-5-5"],
-  info:          ["M12 16v-4M12 8h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"],
-  arrowUp:       ["M12 19V5M5 12l7-7 7 7"],
-  arrowDown:     ["M12 5v14M5 12l7 7 7-7"],
+  train: ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
+  map: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"],
+  arrowLeft: ["M19 12H5M12 19l-7-7 7-7"],
+  dashboard: ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
+  check: ["M20 6L9 17l-5-5"],
+  info: ["M12 16v-4M12 8h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"],
+  arrowUp: ["M12 19V5M5 12l7-7 7 7"],
+  arrowDown: ["M12 5v14M5 12l7 7 7-7"],
 };
 
 const DENSITY_COLORS: Record<string, string> = {
@@ -171,16 +171,16 @@ export default function DashboardPage() {
                   <div className="stat-label">Across all zones</div>
                 </div>
                 <div className="stat-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                     <span className="font-semibold">Emergency Status</span>
-                     <span style={{ color: crowdData?.emergencyActive ? "var(--color-brand-danger)" : "var(--color-brand-accent)", display: "inline-flex" }}>
-                       <Icon d={crowdData?.emergencyActive ? ICONS.alertTriangle : ICONS.check} size={24} />
-                     </span>
-                   </div>
-                   <div className="stat-value" style={{ fontSize: "var(--text-2xl)", marginTop: "var(--space-2)" }}>
-                     {crowdData?.emergencyActive ? "ACTIVE" : "All Clear"}
-                   </div>
-                 </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span className="font-semibold">Emergency Status</span>
+                    <span style={{ color: crowdData?.emergencyActive ? "var(--color-brand-danger)" : "var(--color-brand-accent)", display: "inline-flex" }}>
+                      <Icon d={crowdData?.emergencyActive ? ICONS.alertTriangle : ICONS.check} size={24} />
+                    </span>
+                  </div>
+                  <div className="stat-value" style={{ fontSize: "var(--text-2xl)", marginTop: "var(--space-2)" }}>
+                    {crowdData?.emergencyActive ? "ACTIVE" : "All Clear"}
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -239,10 +239,12 @@ export default function DashboardPage() {
           </div>
           {alerts.length === 0 ? (
             <div className="card" style={{ textAlign: "center", padding: "var(--space-8)" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+              <div style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 56, height: 56, borderRadius: "50%",
                 background: "hsla(158, 35%, 46%, 0.14)", border: "1px solid hsla(158, 35%, 46%, 0.22)",
-                color: "var(--color-brand-accent)", margin: "0 auto var(--space-3)" }}>
+                color: "var(--color-brand-accent)", margin: "0 auto var(--space-3)"
+              }}>
                 <Icon d={ICONS.check} size={32} />
               </div>
               <p style={{ color: "var(--text-secondary)" }}>No active alerts. All systems normal.</p>

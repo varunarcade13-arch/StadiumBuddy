@@ -44,6 +44,7 @@ export const viewport: Viewport = {
 };
 
 import { ThemeProvider } from "@/lib/context/ThemeContext";
+import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -71,27 +72,29 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          {/* Skip Navigation – WCAG 2.4.1 */}
-          <a href="#main-content" className="skip-nav">
-            Skip to main content
-          </a>
-          {/* ARIA live region for global announcements */}
-          <div
-            id="global-announcer"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            className="sr-only"
-          />
-          {/* Emergency announcer – urgent priority */}
-          <div
-            id="emergency-announcer"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-            className="sr-only"
-          />
-          {children}
+          <ErrorBoundary>
+            {/* Skip Navigation – WCAG 2.4.1 */}
+            <a href="#main-content" className="skip-nav">
+              Skip to main content
+            </a>
+            {/* ARIA live region for global announcements */}
+            <div
+              id="global-announcer"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            />
+            {/* Emergency announcer – urgent priority */}
+            <div
+              id="emergency-announcer"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+              className="sr-only"
+            />
+            {children}
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

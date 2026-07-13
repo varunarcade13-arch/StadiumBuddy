@@ -23,33 +23,33 @@ function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
 
 // Icon path definitions
 const ICONS = {
-  bot:        ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
-  map:        ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"],
-  train:      ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
-  gauge:      ["M12 2a10 10 0 100 20A10 10 0 0012 2", "M12 12l4-4"],
+  bot: ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
+  map: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"],
+  train: ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
+  gauge: ["M12 2a10 10 0 100 20A10 10 0 0012 2", "M12 12l4-4"],
   alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z", "M12 9v4M12 17h.01"],
-  leaf:       ["M11 20A7 7 0 014 13c0-4.6 3.4-8 8-8 1.7 0 3.3.6 4.5 1.5M21 3l-7 9M11 20l2-9"],
-  stadium:    ["M3 9h18M3 15h18", "M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"],
-  dashboard:  ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
-  home:       ["M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", "M9 22V12h6v10"],
+  leaf: ["M11 20A7 7 0 014 13c0-4.6 3.4-8 8-8 1.7 0 3.3.6 4.5 1.5M21 3l-7 9M11 20l2-9"],
+  stadium: ["M3 9h18M3 15h18", "M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"],
+  dashboard: ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
+  home: ["M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z", "M9 22V12h6v10"],
   messageSquare: ["M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"],
-  trophy:     ["M8 21h8M12 17v4M5 3h14", "M5 3a7 7 0 007 10A7 7 0 0019 3"],
-  cpu:        ["M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"],
-  zap:        ["M13 2L3 14h9l-1 8 10-12h-9l1-8z"],
-  recycle:    ["M7 19H4a2 2 0 01-2-2V7a2 2 0 012-2h3m10 14h3a2 2 0 002-2V7a2 2 0 00-2-2h-3M8 19l4-4 4 4M12 3v12"],
-  droplet:    ["M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"],
-  battery:    ["M17 7H7a5 5 0 000 10h10a5 5 0 000-10z", "M22 11v2"],
-  shoppingBag:["M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z", "M3 6h18", "M16 10a4 4 0 01-8 0"],
-  users:      ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
+  trophy: ["M8 21h8M12 17v4M5 3h14", "M5 3a7 7 0 007 10A7 7 0 0019 3"],
+  cpu: ["M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"],
+  zap: ["M13 2L3 14h9l-1 8 10-12h-9l1-8z"],
+  recycle: ["M7 19H4a2 2 0 01-2-2V7a2 2 0 012-2h3m10 14h3a2 2 0 002-2V7a2 2 0 00-2-2h-3M8 19l4-4 4 4M12 3v12"],
+  droplet: ["M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"],
+  battery: ["M17 7H7a5 5 0 000 10h10a5 5 0 000-10z", "M22 11v2"],
+  shoppingBag: ["M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z", "M3 6h18", "M16 10a4 4 0 01-8 0"],
+  users: ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
   arrowRight: ["M5 12h14M12 5l7 7-7 7"],
   chevronRight: ["M9 18l6-6-6-6"],
-  volume2:    ["M11 5L6 9H2v6h4l5 4V5z", "M15.54 8.46a5 5 0 010 7.07"],
-  volumeX:    ["M11 5L6 9H2v6h4l5 4V5z", "M23 9l-6 6M17 9l6 6"],
-  mic:        ["M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z", "M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"],
-  micOff:     ["M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6", "M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4M8 23h8"],
+  volume2: ["M11 5L6 9H2v6h4l5 4V5z", "M15.54 8.46a5 5 0 010 7.07"],
+  volumeX: ["M11 5L6 9H2v6h4l5 4V5z", "M23 9l-6 6M17 9l6 6"],
+  mic: ["M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z", "M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"],
+  micOff: ["M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6", "M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4M8 23h8"],
   navigation: ["M3 11l19-9-9 19-2-8-8-2z"],
-  send:       ["M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"],
-  globe:      ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M2 12h20", "M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"],
+  send: ["M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"],
+  globe: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M2 12h20", "M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"],
 } as const;
 
 const FEATURES = [
@@ -73,20 +73,6 @@ const FEATURES = [
     desc: "Predict the best time to leave and which transit line to take based on live crowd data.",
     href: ROUTES.TRANSPORT,
     color: "var(--color-brand-secondary)",
-  },
-  {
-    iconKey: "gauge" as keyof typeof ICONS,
-    title: "Operations Dashboard",
-    desc: "Command center for stadium staff with AI-powered anomaly detection and alerts.",
-    href: ROUTES.DASHBOARD,
-    color: "var(--color-brand-primary)",
-  },
-  {
-    iconKey: "alertTriangle" as keyof typeof ICONS,
-    title: "Emergency Console",
-    desc: "Instant AI-generated evacuation protocols and zone-specific emergency guidance.",
-    href: ROUTES.EMERGENCY,
-    color: "var(--color-brand-danger)",
   },
   {
     iconKey: "leaf" as keyof typeof ICONS,
@@ -137,13 +123,8 @@ export default function HomePage() {
             }}
           >
             <li>
-              <Link href={ROUTES.CHAT} className="btn btn-primary btn-sm">
-                Open AI Assistant
-              </Link>
-            </li>
-            <li>
-              <Link href={ROUTES.DASHBOARD} className="btn btn-secondary btn-sm">
-                Ops Dashboard
+              <Link href={ROUTES.NAVIGATE} className="btn btn-secondary btn-sm">
+                Navigation Map
               </Link>
             </li>
             <li style={{ display: "flex", alignItems: "center" }}>
@@ -238,11 +219,11 @@ export default function HomePage() {
               <Icon d={ICONS.messageSquare} size={22} aria-hidden /> Open AI Chat Assistant
             </Link>
             <Link
-              href={ROUTES.DASHBOARD}
+              href={ROUTES.NAVIGATE}
               className="btn btn-secondary"
               style={{ fontSize: "var(--text-lg)", padding: "var(--space-4) var(--space-8)" }}
             >
-              <Icon d={ICONS.gauge} size={22} aria-hidden /> Operations Dashboard
+              <Icon d={ICONS.map} size={22} aria-hidden /> Stadium Navigation Map
             </Link>
           </div>
         </section>
@@ -429,14 +410,25 @@ export default function HomePage() {
             fontSize: "var(--text-sm)",
           }}
         >
-          <p>
-            StadiumBuddy © 2026 · Built for FIFA World Cup 2026 · Powered by Google Gemini AI
-          </p>
-          <p style={{ marginTop: "var(--space-2)" }}>
-            Supporting{" "}
-            <abbr title="Web Content Accessibility Guidelines 2.2 AA/AAA">WCAG 2.2 AA/AAA</abbr>{" "}
-            · 10 languages · OWASP security standards
-          </p>
+          <div style={{ marginBottom: "var(--space-4)" }}>
+            <p>
+              StadiumBuddy © 2026 · Built for FIFA World Cup 2026 · Powered by Google Gemini AI
+            </p>
+            <p style={{ marginTop: "var(--space-2)" }}>
+              Supporting{" "}
+              <abbr title="Web Content Accessibility Guidelines 2.2 AA/AAA">WCAG 2.2 AA/AAA</abbr>{" "}
+              · 10 languages · OWASP security standards
+            </p>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", gap: "var(--space-4)", fontSize: "var(--text-xs)" }}>
+            <Link href={ROUTES.DASHBOARD} style={{ color: "var(--text-muted)" }}>
+              Operations Dashboard (Staff Only)
+            </Link>
+            <span>·</span>
+            <Link href={ROUTES.EMERGENCY} style={{ color: "var(--text-muted)" }}>
+              Emergency Console (Staff Only)
+            </Link>
+          </div>
         </footer>
       </main>
     </div>

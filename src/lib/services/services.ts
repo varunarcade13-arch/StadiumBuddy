@@ -67,6 +67,15 @@ export interface NavigationRoute {
 export class NavigationService {
   private readonly routeCache = new Map<string, NavigationRoute | null>();
 
+  /**
+   * Finds the optimal route between two stadium waypoints.
+   * Caches calculated routes to avoid redundant computations.
+   * @param venue - The target stadium venue
+   * @param fromId - Starting waypoint ID
+   * @param toId - Target waypoint ID
+   * @param options - Routing options (accessibility filters, crowd avoidance)
+   * @returns Generated NavigationRoute or null if no path is found
+   */
   findRoute(
     venue: Venue,
     fromId: string,
@@ -128,18 +137,12 @@ export class NavigationService {
     return true;
   }
 
-  private findRouteInternal(
-    venue: Venue,
+  private runBFS(
     fromId: string,
     toId: string,
+    waypointMap: Map<string, Waypoint>,
     options: { accessible: boolean; avoidCrowded: boolean; crowdedZoneIds?: string[] }
   ): NavigationRoute | null {
-    const waypointMap = this.buildWaypointMap(venue);
-    const from = waypointMap.get(fromId);
-    const to = waypointMap.get(toId);
-
-    if (!from || !to) return null;
-
     const visited = new Set<string>();
     const queue: Array<{ id: string; path: string[] }> = [{ id: fromId, path: [fromId] }];
 
@@ -157,44 +160,62 @@ export class NavigationService {
       if (visited.has(current.id)) continue;
       visited.add(current.id);
 
-      const currentWaypoint = waypointMap.get(current.id);
-      /* c8 ignore next */
-      if (!currentWaypoint) continue;
-
-      for (let i = 0; i < currentWaypoint.connectedTo.length; i++) {
-        const neighborId = currentWaypoint.connectedTo[i];
-        if (neighborId === undefined || visited.has(neighborId)) continue;
-
-        const neighbor = waypointMap.get(neighborId);
-        if (!neighbor || !this.isNeighborValid(neighbor, options)) continue;
-
-        queue.push({ id: neighborId, path: [...current.path, neighborId] });
-      }
+      this.expandNeighbors(current, waypointMap, visited, queue, options);
     }
 
-    return null; // No path found
+    return null;
   }
 
-  private buildRoute(
-    waypoints: readonly Waypoint[],
-    accessible: boolean
-  ): NavigationRoute {
-    const estimatedMinutes = Math.max(1, Math.round(waypoints.length * 1.5));
-    const distanceMeters = waypoints.length * 30; // ~30m per waypoint
-    let description = "";
-    if (waypoints.length > 0) {
-      const firstW = waypoints[0];
-      if (firstW) {
-        description = firstW.name;
-        for (let i = 1; i < waypoints.length; i++) {
-          const w = waypoints[i];
-          if (w) {
-            description += " → " + w.name;
-          }
-        }
+  private expandNeighbors(
+    current: { id: string; path: string[] },
+    waypointMap: Map<string, Waypoint>,
+    visited: Set<string>,
+    queue: Array<{ id: string; path: string[] }>,
+    options: { accessible: boolean; avoidCrowded: boolean; crowdedZoneIds?: string[] }
+  ): void {
+    const currentWaypoint = waypointMap.get(current.id);
+    /* c8 ignore next */
+    if (!currentWaypoint) return;
+
+    for (let i = 0; i < currentWaypoint.connectedTo.length; i++) {
+      const neighborId = currentWaypoint.connectedTo[i];
+      if (neighborId === undefined || visited.has(neighborId)) continue;
+
+      const neighbor = waypointMap.get(neighborId);
+      if (!neighbor || !this.isNeighborValid(neighbor, options)) continue;
+
+      queue.push({ id: neighborId, path: [...current.path, neighborId] });
+    }
+  }
+
+  private findRouteInternal(
+    venue: Venue,
+    fromId: string,
+    toId: string,
+    options: { accessible: boolean; avoidCrowded: boolean; crowdedZoneIds?: string[] }
+  ): NavigationRoute | null {
+    const waypointMap = this.buildWaypointMap(venue);
+    const from = waypointMap.get(fromId);
+    const to = waypointMap.get(toId);
+
+    if (!from || !to) return null;
+
+    return this.runBFS(fromId, toId, waypointMap, options);
+  }
+
+  private buildRouteDescription(waypoints: readonly Waypoint[]): string {
+    let description = waypoints[0]!.name;
+    for (let i = 1; i < waypoints.length; i++) {
+      const w = waypoints[i];
+      if (w) {
+        description += " → " + w.name;
       }
     }
-    
+    return description;
+  }
+
+  private calculateAccessibilityScore(waypoints: readonly Waypoint[], accessible: boolean): number {
+    if (accessible) return 100;
     let allAccessible = true;
     for (let i = 0; i < waypoints.length; i++) {
       const w = waypoints[i];
@@ -203,19 +224,20 @@ export class NavigationService {
         break;
       }
     }
-    const accessibilityScore = accessible
-      ? 100
-      : allAccessible
-      ? 90
-      : 50;
+    return allAccessible ? 90 : 50;
+  }
 
+  private buildRoute(
+    waypoints: readonly Waypoint[],
+    accessible: boolean
+  ): NavigationRoute {
     return {
       waypoints,
-      estimatedMinutes,
-      distanceMeters,
-      accessibilityScore,
-      congestionScore: 30, // Would use real crowd data in production
-      description,
+      estimatedMinutes: Math.max(1, Math.round(waypoints.length * 1.5)),
+      distanceMeters: waypoints.length * 30,
+      accessibilityScore: this.calculateAccessibilityScore(waypoints, accessible),
+      congestionScore: 30,
+      description: this.buildRouteDescription(waypoints),
     };
   }
 }
@@ -283,6 +305,26 @@ export class TransportService {
     }
   }
 
+  private getTopThreeRecommendations(
+    options: readonly TransportOption[],
+    preferences: { accessible: boolean; preferredMode?: string }
+  ) {
+    const topThree = { first: null, second: null, third: null } as {
+      first: { option: TransportOption; score: number } | null;
+      second: { option: TransportOption; score: number } | null;
+      third: { option: TransportOption; score: number } | null;
+    };
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      if (option) {
+        if (preferences.accessible && !option.accessible) continue;
+        const score = this.calculateOptionScore(option, preferences);
+        this.updateTopThreeRecommendations({ option, score }, topThree);
+      }
+    }
+    return topThree;
+  }
+
   private async getRecommendationInternal(
     venueId: string,
     preferences: { accessible: boolean; preferredMode?: string }
@@ -290,22 +332,7 @@ export class TransportService {
     const options = await this.transportRepo.getTransportOptions(venueId);
     if (options.length === 0) return null;
 
-    const topThree: {
-      first: { option: TransportOption; score: number } | null;
-      second: { option: TransportOption; score: number } | null;
-      third: { option: TransportOption; score: number } | null;
-    } = { first: null, second: null, third: null };
-
-    for (let i = 0; i < options.length; i++) {
-      const option = options[i];
-      if (option) {
-        if (preferences.accessible && !option.accessible) continue;
-
-        const score = this.calculateOptionScore(option, preferences);
-        this.updateTopThreeRecommendations({ option, score }, topThree);
-      }
-    }
-
+    const topThree = this.getTopThreeRecommendations(options, preferences);
     const primary = topThree.first ? topThree.first.option : null;
     if (!primary) return null;
 

@@ -27,16 +27,16 @@ function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
 
 const ICONS = {
   alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z", "M12 9v4M12 17h.01"],
-  arrowLeft:  ["M19 12H5M12 19l-7-7 7-7"],
-  check:      ["M20 6L9 17l-5-5"],
-  bot:        ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
-  info:       ["M12 16v-4M12 8h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"],
-  chevronUp:  ["M18 15l-6-6-6 6"],
+  arrowLeft: ["M19 12H5M12 19l-7-7 7-7"],
+  check: ["M20 6L9 17l-5-5"],
+  bot: ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
+  info: ["M12 16v-4M12 8h.01M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"],
+  chevronUp: ["M18 15l-6-6-6 6"],
   chevronDown: ["M6 9l6 6 6-6"],
-  flame:      ["M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 3.5z"],
+  flame: ["M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 3.5z"],
   plusSquare: ["M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z", "M12 7v10M7 12h10"],
-  shield:     ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
-  users:      ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
+  shield: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
+  users: ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
 } as const;
 
 const SEVERITY_ORDER = { emergency: 0, critical: 1, warning: 2, info: 3 };
@@ -139,10 +139,12 @@ export default function EmergencyPage() {
               Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 120, marginBottom: "var(--space-3)" }} aria-hidden="true" />)
             ) : alerts.length === 0 ? (
               <div className="card" style={{ textAlign: "center", padding: "var(--space-10)" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+                <div style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
                   width: 80, height: 80, borderRadius: "50%",
                   background: "hsla(158, 35%, 46%, 0.14)", border: "1px solid hsla(158, 35%, 46%, 0.22)",
-                  color: "var(--color-brand-accent)", margin: "0 auto var(--space-4)" }}>
+                  color: "var(--color-brand-accent)", margin: "0 auto var(--space-4)"
+                }}>
                   <Icon d={ICONS.check} size={40} />
                 </div>
                 <h2>All Clear</h2>

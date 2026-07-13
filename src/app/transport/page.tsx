@@ -26,19 +26,19 @@ function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
 }
 
 const ICONS = {
-  train:      ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
-  bus:        ["M4 6h16v10H4zM6 16v3M18 16v3M4 12h16"],
-  shuttle:    ["M3 8h18v10H3zM6 18v2M18 18v2M7 12h10"],
-  car:        ["M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"],
-  walking:    ["M18 5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z", "M12 10a2 2 0 100-4 2 2 0 000 4z", "M13 10l-2 4-2-2-3 5"],
-  bike:       ["M18 17a3 3 0 100-6 3 3 0 000 6z", "M6 17a3 3 0 100-6 3 3 0 000 6z", "M12 9l-4 4h8l-4-4z"],
-  arrowLeft:  ["M19 12H5M12 19l-7-7 7-7"],
+  train: ["M4 15l2-8h12l2 8", "M4 15h16", "M9 15v4m6-4v4", "M9 7h6"],
+  bus: ["M4 6h16v10H4zM6 16v3M18 16v3M4 12h16"],
+  shuttle: ["M3 8h18v10H3zM6 18v2M18 18v2M7 12h10"],
+  car: ["M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 12 10s-6.7.6-8.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"],
+  walking: ["M18 5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z", "M12 10a2 2 0 100-4 2 2 0 000 4z", "M13 10l-2 4-2-2-3 5"],
+  bike: ["M18 17a3 3 0 100-6 3 3 0 000 6z", "M6 17a3 3 0 100-6 3 3 0 000 6z", "M12 9l-4 4h8l-4-4z"],
+  arrowLeft: ["M19 12H5M12 19l-7-7 7-7"],
   wheelchair: ["M12 4a2 2 0 100-4 2 2 0 000 4z", "M9 13a4 4 0 004 4h2a4 4 0 004-4v-4h-8v4z"],
-  bot:        ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
-  check:      ["M20 6L9 17l-5-5"],
-  pin:        ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z", "M12 10a3 3 0 100-6 3 3 0 000 6z"],
-  target:     ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 17a5 5 0 100-10 5 5 0 000 10z", "M12 13a1 1 0 100-2 1 1 0 000 2z"],
-  clock:      ["M12 6v6l4 2", "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"],
+  bot: ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
+  check: ["M20 6L9 17l-5-5"],
+  pin: ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z", "M12 10a3 3 0 100-6 3 3 0 000 6z"],
+  target: ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 17a5 5 0 100-10 5 5 0 000 10z", "M12 13a1 1 0 100-2 1 1 0 000 2z"],
+  clock: ["M12 6v6l4 2", "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"],
 } as const;
 
 const MODE_ICONS: Record<string, keyof typeof ICONS> = {
@@ -56,7 +56,7 @@ function LoadBar({ percent, accessible }: { percent: number; accessible: boolean
           {percent}%{accessible && <Icon d={ICONS.wheelchair} size={12} />}
         </span>
       </div>
-      <div className="density-bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+      <div className="density-bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Capacity utilization: ${percent}%`}>
         <div className="density-bar-fill" data-level={level} style={{ width: `${percent}%` }} />
       </div>
     </div>
@@ -136,10 +136,12 @@ export default function TransportPage() {
             </h2>
             <div className="card" style={{ borderTop: "3px solid var(--color-brand-primary)" }}>
               <div className="flex items-center gap-3" style={{ marginBottom: "var(--space-4)" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+                <div style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
                   width: 52, height: 52, borderRadius: "var(--radius-md)",
                   background: "hsla(213, 45%, 58%, 0.12)", border: "1px solid hsla(213, 45%, 58%, 0.18)",
-                  color: "var(--color-brand-primary)", flexShrink: 0 }}>
+                  color: "var(--color-brand-primary)", flexShrink: 0
+                }}>
                   <Icon d={ICONS[MODE_ICONS[recommendation.primaryOption.mode] ?? "bus"]} size={26} />
                 </div>
                 <div>
@@ -217,10 +219,12 @@ export default function TransportPage() {
               {options.map((opt) => (
                 <div key={opt.id} className="card card-solid" aria-label={`${opt.mode}: ${opt.routeName}`}>
                   <div className="flex items-center gap-3" style={{ marginBottom: "var(--space-3)" }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
                       width: 42, height: 42, borderRadius: "var(--radius-md)",
                       background: "hsla(213, 45%, 58%, 0.12)", border: "1px solid hsla(213, 45%, 58%, 0.18)",
-                      color: "var(--color-brand-primary)", flexShrink: 0 }}>
+                      color: "var(--color-brand-primary)", flexShrink: 0
+                    }}>
                       <Icon d={ICONS[MODE_ICONS[opt.mode] ?? "bus"]} size={22} />
                     </div>
                     <div>

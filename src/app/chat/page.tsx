@@ -3,212 +3,75 @@
 // ─── AI Chat Page ──────────────────────────────────────────────────────────────
 // Client Component: manages streaming chat state, voice I/O, multilingual support
 
-import { useState, useRef, useEffect, useCallback, useId, memo } from "react";
-import type { ChatMessage, SupportedLanguage, UserPreferences } from "@/types/chat.types";
-import { SUPPORTED_LANGUAGES } from "@/lib/constants/languages";
-import { VENUES } from "@/lib/constants/venues";
-import { ROUTES } from "@/lib/constants/routes";
+import { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { Logo } from "@/app/components/Logo";
+import { Icon } from "@/app/components/Icon";
+import { SUPPORTED_LANGUAGES } from "@/lib/constants/languages";
+import { VENUES } from "@/lib/constants/venues";
+import { ROUTES } from "@/lib/constants/routes";
 
-// ─── Inline SVG Icons (Lucide-style, no library needed) ──────────────────────
-function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
-  d: string | readonly string[]; size?: number; stroke?: string;
-  className?: string; style?: React.CSSProperties; "aria-hidden"?: boolean;
-}) {
-  const paths = Array.isArray(d) ? d : [d];
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke={stroke} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
-      {...props}>
-      {paths.map((path, i) => <path key={i} d={path} />)}
-    </svg>
-  );
-}
+import { useChat } from "@/lib/hooks/useChat";
+import { useSpeechRecognition } from "@/lib/hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "@/lib/hooks/useSpeechSynthesis";
 
-const ICONS = {
-  stadium:    ["M3 9h18M3 15h18", "M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"],
-  pin:        ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z", "M12 10a3 3 0 100-6 3 3 0 000 6z"],
-  user:       ["M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2", "M12 11a4 4 0 100-8 4 4 0 000 8z"],
-  alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z", "M12 9v4M12 17h.01"],
-  arrowLeft:  ["M19 12H5M12 19l-7-7 7-7"],
-  mic:        ["M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z", "M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"],
-  micOff:     ["M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6", "M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4M8 23h8"],
-  send:       ["M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"],
-  stop:       ["M3 3h18v18H3z"],
-  wheelchair: ["M12 4a2 2 0 100-4 2 2 0 000 4z", "M9 13a4 4 0 004 4h2a4 4 0 004-4v-4h-8v4z"],
-  volume2:    ["M11 5L6 9H2v6h4l5 4V5z", "M15.54 8.46a5 5 0 010 7.07"],
-  volumeX:    ["M11 5L6 9H2v6h4l5 4V5z", "M23 9l-6 6M17 9l6 6"],
-} as const;
-
-
-// ─── Web Speech API Types (not always in lib.dom.d.ts) ───────────────────────
-declare global {
-  interface SpeechRecognitionEvent extends Event {
-    readonly results: SpeechRecognitionResultList;
-  }
-  interface SpeechRecognitionErrorEvent extends Event {
-    readonly error: string;
-  }
-  interface SpeechRecognition extends EventTarget {
-    lang: string;
-    continuous: boolean;
-    interimResults: boolean;
-    onresult: ((e: SpeechRecognitionEvent) => void) | null;
-    onerror: ((e: SpeechRecognitionErrorEvent) => void) | null;
-    onend: (() => void) | null;
-    start(): void;
-    stop(): void;
-    abort(): void;
-  }
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StreamingState {
-  isStreaming: boolean;
-  partialContent: string;
-}
-
-// ─── Utility: Generate ID ──────────────────────────────────────────────────────
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function generateUUID(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-// ─── Utility: Announce to screen reader ───────────────────────────────────────
-function announce(message: string, urgent = false): void {
-  const id = urgent ? "emergency-announcer" : "global-announcer";
-  const el = document.getElementById(id);
-  if (el) {
-    el.textContent = "";
-    // Force re-announcement with setTimeout
-    setTimeout(() => { el.textContent = message; }, 10);
-  }
-}
-
-// ─── Voice Output Hook ────────────────────────────────────────────────────────
-function useTTS() {
-  const speak = useCallback((text: string, lang: string) => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
-  }, []);
-
-  const stop = useCallback(() => {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  }, []);
-
-  return { speak, stop };
-}
-
-// ─── Voice Input Hook ─────────────────────────────────────────────────────────
-function useSTT(language: SupportedLanguage) {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  const startListening = useCallback(
-    (onResult: (text: string) => void, onError?: (err: string) => void) => {
-      const SpeechRecognitionAPI =
-        (typeof window !== "undefined" &&
-          (window.SpeechRecognition ?? window.webkitSpeechRecognition)) ||
-        null;
-
-      if (!SpeechRecognitionAPI) {
-        onError?.("Voice input not supported in this browser. Please use Chrome or Edge.");
-        return;
-      }
-
-      const recognition = new SpeechRecognitionAPI();
-      recognition.lang = language;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0]?.[0]?.transcript ?? "";
-        onResult(transcript);
-        setIsListening(false);
-      };
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        onError?.(event.error);
-        setIsListening(false);
-      };
-      recognition.onend = () => setIsListening(false);
-
-      recognitionRef.current = recognition;
-      recognition.start();
-      setIsListening(true);
-      announce("Voice input activated. Speak now.");
-    },
-    [language]
-  );
-
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  }, []);
-
-  return { isListening, startListening, stopListening };
-}
-
-// ─── Main Chat Component ──────────────────────────────────────────────────────
+import { MessageList } from "@/app/chat/components/MessageList";
+import { ChatInput } from "@/app/chat/components/ChatInput";
+import { PreferencesModal } from "@/app/chat/components/PreferencesModal";
+import type { ChatMessage, SupportedLanguage } from "@/types/chat.types";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState("");
-  const [streaming, setStreaming] = useState<StreamingState>({ isStreaming: false, partialContent: "" });
-  const [sessionId] = useState(() => generateUUID());
+  const {
+    messages,
+    setMessages,
+    inputValue,
+    setInputValue,
+    isStreaming,
+    partialContent,
+    selectedVenueId,
+    setSelectedVenueId,
+    language,
+    setLanguage,
+    voiceEnabled,
+    setVoiceEnabled,
+    userPrefs,
+    setUserPrefs,
+    error,
+    setError,
+    sendMessage,
+    setVoiceSpeaker,
+  } = useChat("metlife");
+
   const [mounted, setMounted] = useState(false);
-  const [selectedVenueId, setSelectedVenueId] = useState("metlife");
-  const [language, setLanguage] = useState<SupportedLanguage>("en");
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [userPrefs, _setUserPrefs] = useState<UserPreferences>({
-    mobilityAssistanceNeeded: false,
-    preferredTransport: null,
-    dietaryRestrictions: [],
-    language: "en",
-    seatingZone: null,
-  });
-  const [error, setError] = useState<string | null>(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const chatId = useId();
 
-  const { speak, stop } = useTTS();
-  const { isListening, startListening, stopListening } = useSTT(language);
+
+  const { speak, stop } = useSpeechSynthesis();
+  const { isListening, startListening, stopListening } = useSpeechRecognition(language);
+
+  // Provide speaker function to useChat
+  useEffect(() => {
+    setVoiceSpeaker(speak);
+  }, [speak, setVoiceSpeaker]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streaming.partialContent]);
+  }, [messages, partialContent]);
 
-  // Welcome message on mount and whenever language changes
+  // Set mounted on client load
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Update welcome message when language changes
+  // Update welcome message when language changes or on mount
   useEffect(() => {
     if (!mounted) return;
+
     const WELCOME_MESSAGES: Record<string, string> = {
       en: "👋 Welcome to StadiumBuddy! I'm your AI companion for the **FIFA World Cup 2026**.\n\nI can help you with:\n• 🗺️ Stadium navigation & directions\n• 🚇 Transport planning\n• 🍔 Food & beverage locations\n• ♿ Accessibility assistance\n• 🚨 Safety & emergency info\n• 🌍 Answers in 10 languages\n\nWhat would you like to know?",
       es: "👋 ¡Bienvenido a StadiumBuddy! Soy tu asistente de IA para la **Copa Mundial de la FIFA 2026**.\n\nPuedo ayudarte con:\n• 🗺️ Navegación y direcciones dentro del estadio\n• 🚇 Planificación de transporte\n• 🍔 Ubicaciones de comida y bebida\n• ♿ Asistencia de accesibilidad\n• 🚨 Información de seguridad y emergencias\n• 🌍 Respuestas en 10 idiomas\n\n¿En qué puedo ayudarte?",
@@ -221,6 +84,7 @@ export default function ChatPage() {
       ja: "👋 StadiumBuddyへようこそ！**FIFA ワールドカップ 2026** のAIアシスタントです。\n\nお手伝いできること：\n• 🗺️ スタジアム内のナビゲーションと道案内\n• 🚇 交通手段の計画\n• 🍔 食事・飲み物の場所\n• ♿ アクセシビリティ支援\n• 🚨 安全・緊急情報\n• 🌍 10言語での回答\n\n何が知りたいですか？",
       ko: "👋 StadiumBuddy에 오신 것을 환영합니다! **FIFA 월드컵 2026**을 위한 AI 어시스턴트입니다.\n\n도움을 드릴 수 있는 것:\n• 🗺️ 경기장 내 길 안내\n• 🚇 교통 계획\n• 🍔 음식 및 음료 위치\n• ♿ 접근성 지원\n• 🚨 안전 및 비상 정보\n• 🌍 10개 언어로 답변\n\n무엇을 알고 싶으신가요?",
     };
+
     const welcomeContent = WELCOME_MESSAGES[language] ?? WELCOME_MESSAGES["en"]!;
     const welcome: ChatMessage = {
       id: "welcome",
@@ -230,150 +94,12 @@ export default function ChatPage() {
       language,
       confidence: "high",
     };
-    // Only update if still showing just the welcome message (don't clobber a live conversation)
+
     setMessages((prev) => {
       const nonWelcome = prev.filter((m) => m.id !== "welcome");
       return [welcome, ...nonWelcome];
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, mounted]);
-
-  // ─── Send Message ─────────────────────────────────────────────────────────
-
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || streaming.isStreaming) return;
-
-      setError(null);
-      const userMessage: ChatMessage = {
-        id: generateId(),
-        role: "user",
-        content: trimmed,
-        timestamp: new Date(),
-        language,
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
-      setInputValue("");
-      setStreaming({ isStreaming: true, partialContent: "" });
-      announce("Sending message to AI assistant");
-
-      // Build compact history (last 20 pairs for token efficiency)
-      const historyPairs = messages.slice(-20).map((m) => ({
-        role: m.role === "user" ? ("user" as const) : ("model" as const),
-        parts: [m.content],
-      }));
-
-      try {
-        const response = await fetch(ROUTES.API.CHAT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: trimmed,
-            sessionId,
-            venueId: selectedVenueId,
-            language,
-            history: historyPairs,
-            userPreferences: { ...userPrefs, language },
-          }),
-        });
-
-        if (!response.ok) {
-          const err = await response.json() as { error?: string; reason?: string };
-          throw new Error(err.reason ?? err.error ?? "Request failed");
-        }
-
-        if (!response.body) throw new Error("No response body");
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = "";
-        let confidence: ChatMessage["confidence"] = "high";
-        let sources: string[] = [];
-        let msgId = generateId();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const raw = decoder.decode(value, { stream: true });
-          const lines = raw.split("\n");
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const jsonStr = line.slice(6);
-            if (!jsonStr) continue;
-
-            try {
-              const chunk = JSON.parse(jsonStr) as {
-                type: string;
-                content?: string;
-                messageId?: string;
-                confidence?: ChatMessage["confidence"];
-                sources?: string[];
-                error?: string;
-              };
-
-              if (chunk.type === "delta" && chunk.content) {
-                accumulated += chunk.content;
-                if (chunk.messageId) msgId = chunk.messageId;
-                setStreaming({ isStreaming: true, partialContent: accumulated });
-              } else if (chunk.type === "done") {
-                if (chunk.confidence) confidence = chunk.confidence;
-                if (chunk.sources) sources = chunk.sources;
-              } else if (chunk.type === "error") {
-                throw new Error(chunk.error ?? "AI response error");
-              }
-            } catch {
-              // Skip malformed chunks
-            }
-          }
-        }
-
-        const assistantMessage: ChatMessage = {
-          id: msgId,
-          role: "assistant",
-          content: accumulated || "I'm sorry, I couldn't generate a response. Please try again.",
-          timestamp: new Date(),
-          language,
-          confidence,
-          ...(sources.length > 0 && { sources: sources as readonly string[] }),
-        };
-
-        setMessages((prev) => [...prev, assistantMessage]);
-        setStreaming({ isStreaming: false, partialContent: "" });
-
-        // Voice output if enabled
-        if (voiceEnabled && accumulated) {
-          speak(accumulated.slice(0, 500), language); // TTS first 500 chars
-        }
-
-        announce(`AI responded: ${accumulated.slice(0, 100)}${accumulated.length > 100 ? "..." : ""}`);
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : "Unknown error";
-        setError(errMsg);
-        setStreaming({ isStreaming: false, partialContent: "" });
-        announce(`Error: ${errMsg}`, true);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [streaming.isStreaming, messages, sessionId, selectedVenueId, language, userPrefs, voiceEnabled, speak]
-  );
-
-  // ─── Keyboard Handler ──────────────────────────────────────────────────────
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        void sendMessage(inputValue);
-      }
-    },
-    [inputValue, sendMessage]
-  );
-
-  // ─── Voice Input ───────────────────────────────────────────────────────────
+  }, [language, mounted, setMessages]);
 
   const handleVoiceInput = useCallback(() => {
     if (isListening) {
@@ -381,12 +107,10 @@ export default function ChatPage() {
       return;
     }
     startListening(
-      (text) => setInputValue((prev) => prev + (prev ? " " : "") + text),
+      (text) => setInputValue(inputValue ? `${inputValue} ${text}` : text),
       (err) => setError(`Voice error: ${err}`)
     );
-  }, [isListening, startListening, stopListening]);
-
-  // ─── Suggested Prompts ─────────────────────────────────────────────────────
+  }, [isListening, startListening, stopListening, inputValue, setInputValue, setError]);
 
   const suggestions = [
     "How do I get to my seat in Section 115?",
@@ -431,13 +155,23 @@ export default function ChatPage() {
         <a href="#main-content" className="skip-nav">Skip to chat</a>
         <div className="flex items-center gap-3">
           <Link href={ROUTES.HOME} aria-label="Back to home" className="btn btn-icon btn-sm">
-            <Icon d={ICONS.arrowLeft} size={20} />
+            <Icon name="arrowLeft" size={20} />
           </Link>
           <Logo size={28} />
           <span className="badge badge-live" aria-label="Live AI service">LIVE</span>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Preferences Trigger */}
+          <button
+            onClick={() => setPrefsOpen(true)}
+            className="btn btn-secondary btn-sm"
+            aria-label="Assistant preferences"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: "var(--touch-target-min)" }}
+          >
+            <Icon name="wheelchair" size={16} /> Preferences
+          </button>
+
           {/* Venue Selector */}
           <label htmlFor="venue-select" className="sr-only">Select venue</label>
           <select
@@ -490,13 +224,13 @@ export default function ChatPage() {
 
           {/* Voice toggle */}
           <button
-            onClick={() => { setVoiceEnabled((v) => !v); if (voiceEnabled) stop(); }}
+            onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) stop(); }}
             className="btn btn-icon"
             aria-pressed={voiceEnabled}
             aria-label={voiceEnabled ? "Disable voice output" : "Enable voice output"}
             title={voiceEnabled ? "Voice output ON" : "Voice output OFF"}
           >
-            <Icon d={voiceEnabled ? ICONS.volume2 : ICONS.volumeX} size={22} />
+            <Icon name={voiceEnabled ? "volume2" : "volumeX"} size={22} />
           </button>
           <ThemeToggle />
         </div>
@@ -519,12 +253,12 @@ export default function ChatPage() {
             flexShrink: 0,
           }}
         >
-          <Icon d={ICONS.pin} size={20} style={{ color: "var(--color-brand-primary)" }} />
+          <Icon name="pin" size={20} style={{ color: "var(--color-brand-primary)" }} />
           <strong>{selectedVenue.name}</strong> · {selectedVenue.city}, {selectedVenue.state} ·
           Capacity: {selectedVenue.capacity.toLocaleString()}
-          {selectedVenue.accessibilityFeatures.length > 0 && (
+          {(selectedVenue.accessibilityFeatures.length > 0 || userPrefs.mobilityAssistanceNeeded) && (
             <span className="badge badge-info" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Icon d={ICONS.wheelchair} size={16} /> Accessible
+              <Icon name="wheelchair" size={16} /> Accessible
             </span>
           )}
         </div>
@@ -540,87 +274,32 @@ export default function ChatPage() {
           overflow: "hidden",
         }}
       >
-        {/* Messages Area */}
-        <div
-          role="log"
-          aria-label="Conversation history"
-          aria-live="polite"
-          aria-atomic="false"
-          aria-relevant="additions"
-          id={chatId}
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "var(--space-6)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-4)",
-          }}
-        >
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))}
+        {/* Messages List Component */}
+        <MessageList messages={messages} isStreaming={isStreaming} partialContent={partialContent} />
 
-          {/* Streaming partial message */}
-          {streaming.isStreaming && (
-            <div
-              aria-label="AI is typing"
-              style={{ display: "flex", gap: "var(--space-3)", alignItems: "flex-start" }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  background: "var(--gradient-brand)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  flexShrink: 0,
-                }}
+        {/* Error state banner */}
+        {error && (
+          <div
+            role="alert"
+            className="alert-banner alert-banner-critical"
+            style={{ maxWidth: "600px", margin: "0 auto var(--space-4)", display: "flex", gap: "var(--space-2)" }}
+          >
+            <Icon name="alertTriangle" size={20} />
+            <div>
+              <strong>Error:</strong> {error}
+              <button
+                onClick={() => setError(null)}
+                style={{ marginLeft: "var(--space-3)" }}
+                className="btn btn-sm btn-secondary"
+                aria-label="Dismiss error"
               >
-                <Icon d={ICONS.stadium} size={20} />
-              </div>
-              <div className="chat-bubble-assistant">
-                {streaming.partialContent ? (
-                  <MarkdownContent content={streaming.partialContent} />
-                ) : (
-                  <div className="chat-typing-indicator" aria-label="AI is composing a response">
-                    <div className="typing-dot" />
-                    <div className="typing-dot" />
-                    <div className="typing-dot" />
-                  </div>
-                )}
-              </div>
+                Dismiss
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Error state */}
-          {error && (
-            <div
-              role="alert"
-              className="alert-banner alert-banner-critical"
-              style={{ maxWidth: "600px" }}
-            >
-              <Icon d={ICONS.alertTriangle} size={20} />
-              <div>
-                <strong>Error:</strong> {error}
-                <button
-                  onClick={() => setError(null)}
-                  style={{ marginLeft: "var(--space-3)" }}
-                  className="btn btn-sm btn-secondary"
-                  aria-label="Dismiss error"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} aria-hidden="true" />
-        </div>
+        <div ref={messagesEndRef} aria-hidden="true" />
 
         {/* ── Suggested Prompts ─────────────────────────────────────────── */}
         {messages.length <= 1 && (
@@ -659,259 +338,25 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* ── Input Area ────────────────────────────────────────────────── */}
-        <div
-          style={{
-            padding: "var(--space-4) var(--space-6) var(--space-6)",
-            borderTop: "1px solid var(--surface-glass-border)",
-            background: "var(--surface-bg)",
-            backdropFilter: "blur(12px)",
-            flexShrink: 0,
-          }}
-        >
-          <form
-            onSubmit={(e) => { e.preventDefault(); void sendMessage(inputValue); }}
-            role="search"
-            aria-label="Send a message to AI assistant"
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: "var(--space-3)",
-                alignItems: "flex-end",
-                maxWidth: "900px",
-                margin: "0 auto",
-              }}
-            >
-              {/* Voice Input Button */}
-              <button
-                type="button"
-                onClick={handleVoiceInput}
-                className="btn btn-icon"
-                aria-label={isListening ? "Stop voice input" : "Start voice input"}
-                aria-pressed={isListening}
-                style={{
-                  borderColor: isListening ? "var(--color-brand-danger)" : undefined,
-                  color: isListening ? "var(--color-brand-danger)" : undefined,
-                  animation: isListening ? "pulse 1s infinite" : undefined,
-                  flexShrink: 0,
-                }}
-              >
-                {isListening ? <Icon d={ICONS.stop} size={22} /> : <Icon d={ICONS.mic} size={22} />}
-              </button>
-
-              {/* Text Input */}
-              <div style={{ flex: 1, position: "relative" }}>
-                <label htmlFor="chat-input" className="sr-only">
-                  Type a message (press Enter to send, Shift+Enter for newline)
-                </label>
-                <textarea
-                  id="chat-input"
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    isListening
-                      ? "Listening... speak now"
-                      : "Ask about navigation, food, transport, accessibility..."
-                  }
-                  aria-multiline="true"
-                  aria-label="Chat message input"
-                  aria-describedby="chat-input-hint"
-                  rows={1}
-                  disabled={streaming.isStreaming}
-                  style={{
-                    width: "100%",
-                    minHeight: "var(--touch-target-min)",
-                    maxHeight: "120px",
-                    padding: "var(--space-3) var(--space-4)",
-                    fontSize: "var(--text-base)",
-                    fontFamily: "var(--font-sans)",
-                    color: "var(--text-primary)",
-                    background: "var(--surface-glass)",
-                    border: "1px solid var(--surface-glass-border)",
-                    borderRadius: "var(--radius-lg)",
-                    resize: "none",
-                    outline: "none",
-                    transition: "border-color var(--transition-fast), box-shadow var(--transition-fast)",
-                    lineHeight: "var(--leading-normal)",
-                    overflow: "hidden",
-                    overflowY: "auto",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-brand-primary)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px hsla(220, 90%, 56%, 0.2)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                />
-                <p id="chat-input-hint" className="sr-only">
-                  Press Enter to send. Press Shift+Enter for a new line.
-                </p>
-              </div>
-
-              {/* Send Button */}
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || streaming.isStreaming}
-                className="btn btn-primary"
-                aria-label="Send message"
-                style={{ flexShrink: 0, gap: "var(--space-2)" }}
-              >
-                {streaming.isStreaming ? (
-                  <span aria-label="Sending...">⟳</span>
-                ) : (
-                  <>Send <Icon d={ICONS.send} size={18} /></>
-                )}
-              </button>
-            </div>
-          </form>
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: "var(--text-xs)",
-              color: "var(--text-muted)",
-              marginTop: "var(--space-2)",
-            }}
-          >
-            AI responses may not be 100% accurate. For emergencies, contact stadium security directly.
-          </p>
-        </div>
+        {/* ── Input Area Component ────────────────────────────────────────── */}
+        <ChatInput
+          ref={inputRef}
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          isStreaming={isStreaming}
+          isListening={isListening}
+          onVoiceToggle={handleVoiceInput}
+          onSubmit={sendMessage}
+        />
       </main>
+
+      {/* Preferences Modal Dialog */}
+      <PreferencesModal
+        isOpen={prefsOpen}
+        onClose={() => setPrefsOpen(false)}
+        userPrefs={userPrefs}
+        onChange={setUserPrefs}
+      />
     </div>
   );
 }
-
-// ─── Message Bubble Component ─────────────────────────────────────────────────
-
-const MessageBubble = memo(function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: "var(--space-3)",
-        alignItems: "flex-start",
-        flexDirection: isUser ? "row-reverse" : "row",
-      }}
-      className="animate-fade-in-up"
-    >
-      {/* Avatar */}
-      <div
-        aria-hidden="true"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          background: isUser ? "var(--surface-card)" : "var(--gradient-brand)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: isUser ? "var(--text-secondary)" : "white",
-          flexShrink: 0,
-          border: "1px solid var(--surface-glass-border)",
-        }}
-      >
-        {isUser ? <Icon d={ICONS.user} size={20} /> : <Icon d={ICONS.stadium} size={20} />}
-      </div>
-
-      <div style={{ maxWidth: "80%" }}>
-        <div
-          className={isUser ? "chat-bubble-user" : "chat-bubble-assistant"}
-          aria-label={`${isUser ? "You" : "StadiumBuddy AI"}: ${message.content}`}
-        >
-          <MarkdownContent content={message.content} />
-        </div>
-
-        {/* Metadata */}
-        <div
-          style={{
-            display: "flex",
-            gap: "var(--space-2)",
-            marginTop: "var(--space-1)",
-            justifyContent: isUser ? "flex-end" : "flex-start",
-            flexWrap: "wrap",
-          }}
-        >
-          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-            <time dateTime={message.timestamp.toISOString()}>
-              {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </time>
-          </span>
-          {message.confidence && !isUser && (
-            <span
-              className={`badge badge-${message.confidence === "high" ? "low" : message.confidence === "medium" ? "moderate" : "high"}`}
-              aria-label={`Confidence: ${message.confidence}`}
-              style={{ display: "inline-flex", alignItems: "center", gap: 3 }}
-            >
-              {message.confidence === "uncertain" && <Icon d={ICONS.alertTriangle} size={14} />}
-              {message.confidence}
-            </span>
-          )}
-          {message.sources && message.sources.length > 0 && (
-            <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-              Sources: {message.sources.join(", ")}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// ─── Simple Markdown Renderer ─────────────────────────────────────────────────
-// Minimal markdown parsing for bold, bullets, and line breaks
-
-const MarkdownContent = memo(function MarkdownContent({ content }: { content: string }) {
-  const lines = content.split("\n");
-
-  return (
-    <div style={{ lineHeight: "var(--leading-relaxed)" }}>
-      {lines.map((line, i) => {
-        if (line.startsWith("• ") || line.startsWith("- ") || line.match(/^\d+\.\s/)) {
-          return (
-            <div key={i} style={{ paddingLeft: "var(--space-3)", marginBottom: "var(--space-1)" }}>
-              <span aria-hidden="true">• </span>
-              <InlineFormatted text={line.replace(/^[•\-]\s|\d+\.\s/, "")} />
-            </div>
-          );
-        }
-        if (line.startsWith("## ") || line.startsWith("### ")) {
-          return (
-            <p key={i} style={{ fontWeight: "var(--weight-bold)", marginBottom: "var(--space-2)" }}>
-              <InlineFormatted text={line.replace(/^#{2,3}\s/, "")} />
-            </p>
-          );
-        }
-        if (line === "") return <div key={i} style={{ height: "var(--space-2)" }} />;
-        return (
-          <p key={i} style={{ marginBottom: "var(--space-1)" }}>
-            <InlineFormatted text={line} />
-          </p>
-        );
-      })}
-    </div>
-  );
-});
-
-const InlineFormatted = memo(function InlineFormatted({ text }: { text: string }) {
-  // Process **bold** and *italic*
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return <strong key={i}>{part.slice(2, -2)}</strong>;
-        }
-        if (part.startsWith("*") && part.endsWith("*")) {
-          return <em key={i}>{part.slice(1, -1)}</em>;
-        }
-        return <span key={i}>{part}</span>;
-      })}
-    </>
-  );
-});

@@ -11,33 +11,7 @@ import { NavigationService, type NavigationRoute } from "@/lib/services/services
 import { ROUTES } from "@/lib/constants/routes";
 import type { Venue } from "@/types/venue.types";
 
-// ─── Inline SVG Icons (Lucide-style, no library needed) ──────────────────────
-function Icon({ d, size = 20, stroke = "currentColor", ...props }: {
-  d: string | readonly string[]; size?: number; stroke?: string;
-  className?: string; style?: React.CSSProperties; "aria-hidden"?: boolean;
-}) {
-  const paths = Array.isArray(d) ? d : [d];
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke={stroke} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
-      {...props}>
-      {paths.map((path, i) => <path key={i} d={path} />)}
-    </svg>
-  );
-}
-
-const ICONS = {
-  map:           ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"],
-  stadium:       ["M3 9h18M3 15h18", "M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"],
-  alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z", "M12 9v4M12 17h.01"],
-  arrowLeft:     ["M19 12H5M12 19l-7-7 7-7"],
-  wheelchair:    ["M12 4a2 2 0 100-4 2 2 0 000 4z", "M9 13a4 4 0 004 4h2a4 4 0 004-4v-4h-8v4z"],
-  bot:           ["M12 8V4H8", "M12 8V4h4", "M3 12a9 9 0 1018 0 9 9 0 00-18 0", "M9 12h.01M15 12h.01"],
-  chair:         ["M7 10V5a2 2 0 012-2h6a2 2 0 012 2v5M5 21V10h14v11M9 15h6"],
-  door:          ["M15 3H6a2 2 0 00-2 2v14a2 2 0 002 2h9M10 11l4 4-4 4M20 15H10"],
-  utensils:      ["M3 3v8a5 5 0 005 5h1M8 11V3M18 3v13M18 3a3 3 0 00-3 3v5"],
-  plusSquare:    ["M9 12h6M12 9v6M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"],
-} as const;
+import { Icon, type IconKey } from "@/app/components/Icon";
 
 
 const navService = new NavigationService();
@@ -60,8 +34,8 @@ function StadiumMapSVG({ venue, route }: { venue: Venue; route: NavigationRoute 
             d={zone.svgPath}
             fill={zone.type === "seating" ? "hsla(220,40%,30%,0.5)" :
               zone.type === "entry" || zone.type === "exit" ? "hsla(158,60%,30%,0.5)" :
-              zone.type === "food" ? "hsla(38,80%,30%,0.5)" :
-              zone.type === "medical" ? "hsla(4,70%,30%,0.5)" : "hsla(220,20%,25%,0.5)"}
+                zone.type === "food" ? "hsla(38,80%,30%,0.5)" :
+                  zone.type === "medical" ? "hsla(4,70%,30%,0.5)" : "hsla(220,20%,25%,0.5)"}
             stroke="var(--surface-glass-border)"
             strokeWidth={1}
             aria-label={zone.name}
@@ -180,7 +154,7 @@ export default function NavigatePage() {
         <a href="#main-content" className="skip-nav">Skip to navigation</a>
         <div className="flex items-center gap-3">
           <Link href={ROUTES.HOME} className="btn btn-icon btn-sm" aria-label="Back">
-            <Icon d={ICONS.arrowLeft} size={20} />
+            <Icon name="arrowLeft" size={20} />
           </Link>
           <Logo size={28} />
           <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginLeft: "var(--space-2)" }}>Navigation</span>
@@ -231,17 +205,17 @@ export default function NavigatePage() {
           <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", cursor: "pointer", minHeight: "var(--touch-target-min)" }}>
             <input type="checkbox" checked={accessible} onChange={(e) => setAccessible(e.target.checked)} style={{ width: 18, height: 18 }} aria-label="Find accessible route only" />
             <span style={{ fontSize: "var(--text-sm)", fontWeight: "var(--weight-medium)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Icon d={ICONS.wheelchair} size={18} /> Accessible route only
+              <Icon name="wheelchair" size={18} /> Accessible route only
             </span>
           </label>
 
           <button onClick={findRoute} disabled={!fromId || !toId} className="btn btn-primary" aria-label="Find route" style={{ gap: "var(--space-2)" }}>
-            <Icon d={ICONS.map} size={20} /> Find Route
+            <Icon name="map" size={20} /> Find Route
           </button>
 
           {noRoute && (
             <div className="alert-banner alert-banner-warning" role="alert">
-              <Icon d={ICONS.alertTriangle} size={20} />
+              <Icon name="alertTriangle" size={20} />
               No route found between selected points. Try disabling accessibility filter or choosing different points.
             </div>
           )}
@@ -265,12 +239,12 @@ export default function NavigatePage() {
               <div className="flex gap-2" style={{ flexWrap: "wrap" }}>
                 {route.accessibilityScore >= 90 && (
                   <span className="badge badge-low" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                    <Icon d={ICONS.wheelchair} size={14} /> Fully Accessible
+                    <Icon name="wheelchair" size={14} /> Fully Accessible
                   </span>
                 )}
                 {route.congestionScore < 50 && (
                   <span className="badge badge-info" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                    <Icon d={ICONS.bot} size={14} /> Low Congestion
+                    <Icon name="bot" size={14} /> Low Congestion
                   </span>
                 )}
               </div>
@@ -284,13 +258,13 @@ export default function NavigatePage() {
           <div className="card card-solid">
             <h3 style={{ fontSize: "var(--text-sm)", marginBottom: "var(--space-3)" }}>Zone Types</h3>
             {[
-              { iconKey: "chair" as keyof typeof ICONS, label: "Seating Areas", color: "var(--color-brand-primary)" },
-              { iconKey: "door" as keyof typeof ICONS, label: "Entry/Exit", color: "var(--color-brand-accent)" },
-              { iconKey: "utensils" as keyof typeof ICONS, label: "Food & Beverage", color: "var(--color-brand-secondary)" },
-              { iconKey: "plusSquare" as keyof typeof ICONS, label: "Medical & First Aid", color: "var(--color-brand-danger)" },
+              { iconKey: "chair" as IconKey, label: "Seating Areas", color: "var(--color-brand-primary)" },
+              { iconKey: "door" as IconKey, label: "Entry/Exit", color: "var(--color-brand-accent)" },
+              { iconKey: "utensils" as IconKey, label: "Food & Beverage", color: "var(--color-brand-secondary)" },
+              { iconKey: "plusSquare" as IconKey, label: "Medical & First Aid", color: "var(--color-brand-danger)" },
             ].map((z) => (
               <div key={z.label} className="flex items-center gap-2" style={{ marginBottom: "var(--space-2)", fontSize: "var(--text-xs)" }}>
-                <span style={{ color: z.color, display: "inline-flex" }}><Icon d={ICONS[z.iconKey]} size={18} /></span>
+                <span style={{ color: z.color, display: "inline-flex" }}><Icon name={z.iconKey} size={18} /></span>
                 <span style={{ color: "var(--text-secondary)" }}>{z.label}</span>
               </div>
             ))}
@@ -303,7 +277,7 @@ export default function NavigatePage() {
           {!fromId && !toId && (
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "hsla(220,20%,7%,0.5)", borderRadius: "var(--radius-xl)" }}>
               <div style={{ textAlign: "center", color: "var(--text-secondary)", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <Icon d={ICONS.stadium} size={44} style={{ color: "var(--text-muted)", marginBottom: "var(--space-2)" }} />
+                <Icon name="stadium" size={44} style={{ color: "var(--text-muted)", marginBottom: "var(--space-2)" }} />
                 <p style={{ fontSize: "var(--text-sm)" }}>Select start and destination to view route</p>
               </div>
             </div>

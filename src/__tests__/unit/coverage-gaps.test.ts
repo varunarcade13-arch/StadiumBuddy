@@ -193,7 +193,7 @@ describe("TransportService – caching and score branches", () => {
       { id: "t1", venueId: "v1", mode: "metro", routeName: "R1", destination: "D", departurePoint: "P", estimatedWaitMinutes: 5, capacity: 100, currentLoad: 10, nextDepartureAt: new Date(), frequency: "10m", accessible: true, priceUSD: 2 },
       { id: "t2", venueId: "v1", mode: "bus", routeName: "R2", destination: "D", departurePoint: "P", estimatedWaitMinutes: 10, capacity: 100, currentLoad: 30, nextDepartureAt: new Date(), frequency: "15m", accessible: true, priceUSD: 2 },
       { id: "t3", venueId: "v1", mode: "shuttle", routeName: "R3", destination: "D", departurePoint: "P", estimatedWaitMinutes: 15, capacity: 100, currentLoad: 50, nextDepartureAt: new Date(), frequency: "20m", accessible: true, priceUSD: 2 },
-      { id: "t4", venueId: "v1", mode: "walk", routeName: "R4", destination: "D", departurePoint: "P", estimatedWaitMinutes: 20, capacity: 100, currentLoad: 70, nextDepartureAt: new Date(), frequency: "N/A", accessible: true, priceUSD: 0 },
+      { id: "t4", venueId: "v1", mode: "walking", routeName: "R4", destination: "D", departurePoint: "P", estimatedWaitMinutes: 20, capacity: 100, currentLoad: 70, nextDepartureAt: new Date(), frequency: "N/A", accessible: true, priceUSD: 0 },
     ];
     const customRepo = { getTransportOptions: vi.fn().mockResolvedValue(options), getOptionById: vi.fn() };
     const service = new TransportService(customRepo);
@@ -348,7 +348,7 @@ describe("MatchService.getMatchContextString – score info branch", () => {
   it("includes score when homeScore and awayScore are set", async () => {
     const matchWithScore: Match = {
       id: "scored-match", venueId: "test", homeTeam: "Team A", awayTeam: "Team B",
-      kickoffTime: new Date(), status: "live", stage: "Group A",
+      kickoffTime: new Date(), status: "live", stage: "group",
       homeScore: 2, awayScore: 1,
     };
     const customRepo = {
@@ -366,7 +366,7 @@ describe("MatchService.getMatchContextString – score info branch", () => {
   it("omits score when homeScore is null", async () => {
     const matchNoScore: Match = {
       id: "no-score", venueId: "test", homeTeam: "Team A", awayTeam: "Team B",
-      kickoffTime: new Date(), status: "scheduled", stage: "Semifinal",
+      kickoffTime: new Date(), status: "scheduled", stage: "semi-final",
       homeScore: null, awayScore: null,
     };
     const customRepo = {

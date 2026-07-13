@@ -1,7 +1,7 @@
 // ─── API Error Path Tests ──────────────────────────────────────────────────────
 // Uses vi.mock to inject service failures into API route catch blocks.
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { clearRateLimitStore } from "@/lib/middleware/rate-limiter";
 

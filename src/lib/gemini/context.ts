@@ -21,11 +21,11 @@ export interface RagContext {
 // ─── Keyword Extractor ────────────────────────────────────────────────────────
 
 const TOPIC_KEYWORDS: Record<string, readonly string[]> = {
-  accessibility: ["wheelchair", "accessible", "disability", "mobility", "hearing", "blind", "deaf", "assistance"],
-  transport: ["bus", "metro", "shuttle", "train", "taxi", "uber", "lyft", "parking", "transport", "ride"],
-  food: ["food", "eat", "drink", "beer", "vegan", "halal", "kosher", "concession", "restaurant", "snack"],
-  safety: ["security", "safe", "emergency", "first aid", "medical", "police", "lost", "bag check"],
-  navigation: ["where", "how do i get", "direction", "gate", "entrance", "exit", "section", "seat", "find"],
+  accessibility: ["wheelchair", "accessible", "disability", "mobility", "hearing", "blind", "deaf", "assistance", "elderly", "parents", "slow", "stairs", "lift", "ramp", "wheelchair", "handicap", "stroller"],
+  transport: ["bus", "metro", "shuttle", "train", "taxi", "uber", "lyft", "parking", "transport", "ride", "late", "delay", "hurry", "rush", "traffic", "transit"],
+  food: ["food", "eat", "drink", "beer", "vegan", "halal", "kosher", "concession", "restaurant", "snack", "vegetarian", "allergy", "gluten", "diet"],
+  safety: ["security", "safe", "emergency", "first aid", "medical", "police", "lost", "bag check", "hurt", "pain", "doctor"],
+  navigation: ["where", "how do i get", "direction", "gate", "entrance", "exit", "section", "seat", "find", "stairs", "walk", "wayfinding", "gate a", "gate b", "gate c", "gate d"],
   tickets: ["ticket", "scan", "entry", "pass", "credential"],
 };
 
